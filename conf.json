@@ -1,0 +1,12 @@
+{
+"proj_dir": "",
+"log_dir": "",
+"mail_server": "",
+"mailbox": "",
+"mail_from": "",
+"mail_pass": "",
+"db_user": "",
+"db_pass": "",
+"bad_ips": [],
+"infsec_emails": []
+}

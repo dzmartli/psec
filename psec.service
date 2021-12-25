@@ -1,0 +1,12 @@
+[Unit]
+Description=PSEC
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/USER/psec/psec.py /home/USER/psec/
+Restart=on-failure
+User=USER
+
+[Install]
+WantedBy=multi-user.target
