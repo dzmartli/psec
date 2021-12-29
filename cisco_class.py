@@ -180,3 +180,4 @@ class BaseCiscoSSH(Wrapp):
             logging.info('!!!NOT OK!!! НЕ УДАЛОСЬ НАСТРОИТЬ, '
                          'МАС НЕ ПРИЛИПАЕТ К ПОРТУ\r\n\r\nЗаявка не выполнена')
             return False
+
