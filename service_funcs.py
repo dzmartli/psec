@@ -253,3 +253,4 @@ def end_task(log_file_name, mac, task_result, config):
          config['log_dir'] + 'log_archive/' + log_file_name + '.txt'
     subprocess.Popen(mv, shell=True)
     sys.exit()
+

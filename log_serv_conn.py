@@ -45,3 +45,4 @@ def log_server_check(sql_query, log_file_name, mac, config):
         logging.info('НЕ МОГУ ПОДКЛЮЧИТЬСЯ К ЛОГ-СЕРВЕРУ\r\n\r\n' + str(error) + '\r\n\r\nЗаявка не выполнена')
         task_result = 'Заявка не выполнена'
         end_task(log_file_name, mac, task_result, config)
+

@@ -44,3 +44,4 @@ class Wrapp:
                 task_result = 'Заявка не выполнена'
             end_task(self.log_file_name, self.mac, task_result, self.config)
         return wrapp_pass_check
+

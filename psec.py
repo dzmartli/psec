@@ -188,3 +188,4 @@ if __name__ == '__main__':
     with open(project_dir + 'conf.json', 'r') as conf:
         config = json.load(conf)
     main()
+

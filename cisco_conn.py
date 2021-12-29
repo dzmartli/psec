@@ -42,3 +42,4 @@ def cisco_connection(log_file_name, task_params, mac, config):
         logging.exception('ОШИБКА ВЫПОЛНЕНИЯ ЗАЯВКИ\r\n\r\nЗаявка не выполнена\r\n\r\n')
         task_result = 'Заявка не выполнена'
         end_task(log_file_name, mac, task_result, config)
+

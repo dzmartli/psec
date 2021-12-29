@@ -48,3 +48,4 @@ def log_parse(sql_answer):
             'port_num': cisco_port_num(sql_answer),
         }
         return task_params
+
