@@ -1,92 +1,87 @@
 @startuml
-title Диаграмма последовательности Psec
+title Sequence diagram Psec
 autonumber
-actor "Сотрудник ИБ" as Foo
+actor "Infsec engineer" as Foo
 box "Mail Server"
-participant "Почтовый ящик\nадминистратора сети" as Foo1
-participant "Почтовый ящик\nPsec" as Foo2
+participant "Network admin\nmailbox" as Foo1
+participant "Psec\nmailbox" as Foo2
 end box
 participant "Psec Server" as Foo3
 participant "Log Server" as Foo4
-participant "Коммутатор\nдоступа" as Foo5
-actor "Системный\nадминистратор" as Foo6
-Foo -> Foo1 : Сообщение с заявкой на\nподключение нового устройства
-Foo1 -> Foo2 : Форвардинг сообщения\nс заявкой
-loop Проверка на наличие входящих сообщений (два раза в минуту)
+participant "Access Switch" as Foo5
+actor "Sysadmin" as Foo6
+Foo -> Foo1 : Message requesting\na new device connection
+Foo1 -> Foo2 : Request message forwarding
+loop Check for incoming messages (twice a minute)
     Foo3 <-[#red]> Foo2 : POP3
-alt Проверка сообщения
-    Foo3 -> Foo3 : Создание дочернего процесса\nдля выполнение одной заявки
+alt Message check
+    Foo3 -> Foo3 : Creating a child process\nto execute one request
     note left
-     Трек-идентификатор
-     заявки содержит
-     MAC-адрес устройства
+     Track ID contains
+     the MAC address of the device
     end note
     Foo3 <-[#red]> Foo2 : SMTP
-    Foo2 ->> Foo1 : Заявка принята в обработку
+    Foo2 ->> Foo1 : Request accepted for processing
     note left
-     "<<MAC-адрес устройства>>
-     принят в обработку"
-     в теме сообщения
+     "<<Device MAC address>>
+     request accepted"
+     in the message subject
     end note
-    == Выполнение одной заявки ==
-    loop Запрос к БД лог-сервера (раз в минуту)
-        Foo3 <-[#blue]> Foo4 : SSH подключение к лог-серверу,\nзапрос к БД Syslog (netmiko)
+    == Executing a single request ==
+    loop Log server DB query (once per minute)
+        Foo3 <-[#blue]> Foo4 : SSH connection to the log server,\nquery to the Syslog DB (netmiko)
         note left
-         Запрос содержит MAC-адрес
-         нового подключаемого устройства
+         The request contains the MAC address
+         of the new connected device
         end note
-        hnote over Foo3, Foo4 : Ожидание подключения устройства
+        hnote over Foo3, Foo4 : Waiting for device connection
         ...
-        Foo6 -> Foo5 : Подключение\nнового устройства
-        Foo5 ->> Foo4 : Syslog сообщение
+        Foo6 -> Foo5 : Connecting a new device
+        Foo5 ->> Foo4 : Syslog message
         note right
-         Сообщение
-         информационной безопастности
+         Information security message
         end note
-        Foo4 --> Foo3 : Ответ от БД лог-сервера
-        Foo3 -> Foo3 : Парсинг syslog сообщения
+        Foo4 --> Foo3 : Response from log server DB
+        Foo3 -> Foo3 : Syslog message parsing
         note left
-         Для дальнейшей настройки необходимы
-         ip-адрес коммутатора доступа,
-         порт к которому подключено новое устройство
+         To configure the switch,
+         you need the IP address
+         and access port number
+         to which the new device is connected.
         end note
-        Foo3 <-[#blue]> Foo5 : SSH подключение к коммутатору доступа,\nвыполнение насторек (netmiko)
+        Foo3 <-[#blue]> Foo5 : SSH connection to the access switch,\nperforming configuration (netmiko)
         Foo3 <-[#red]> Foo2 : SMTP
-        alt #LightBlue Сообщение с результатом выполнения
-            Foo2 ->> Foo1 : Заявка выполнена
+        alt #LightBlue Execution result message
+            Foo2 ->> Foo1 : Task completed
             note right
-             Статус выполнения заявки
-             в теме сообщения,
-             лог выполнения
-             заявки в теле сообщения
+             Task execution status in the message subject,
+             task execution log in the message body
             end note
         autonumber 14.1
-        else #LightBlue Настройки выполнены ранее
-            Foo2 ->> Foo1 : Заявка выполнена
-        else #Pink Устройство в списке исключенных
-            Foo2 ->> Foo1 : Заявка не выполнена
-        else #Pink Попытка подключения устройства через Hub
-            Foo2 ->> Foo1 : Заявка не выполнена
-        else #Pink Порт доступа в состоянии shutdown
-            Foo2 ->> Foo1 : Заявка не выполнена
-        else #Pink Не удалось настроить
-            Foo2 ->> Foo1 : Заявка не выполнена
+        else #LightBlue Settings have been made before
+            Foo2 ->> Foo1 : Task completed
+        else #Pink Device in the excluded list
+            Foo2 ->> Foo1 : Task failed
+        else #Pink Connecting via hub
+            Foo2 ->> Foo1 : Task failed
+        else #Pink Access port in shutdown state
+            Foo2 ->> Foo1 : Task failed
+        else #Pink Failed to configure
+            Foo2 ->> Foo1 : Task failed
         end
         autonumber 7.1
-        break #Pink Окончание рабочего дня (после 18:00)
-            Foo2 ->> Foo1 : Заявка не выполнена
+        break #Pink End of the working day (after 18:00)
+            Foo2 ->> Foo1 : Task failed
             note right
-             Устройство не было подключено
-             в течение дня
+             The device has not been connected during the day
             end note
         end
     end
 autonumber 6.1
-else #Pink Заявка поступила не от сотрудника ИБ
-    Foo2 ->> Foo1 : Заявка не принята в обработку
-else #Pink В теле письма отсутствует MAC-адрес (либо их слишком много)
-    Foo2 ->> Foo1 : Заявка не принята в обработку
+else #Pink The Request was not received from an Infsec engineer
+    Foo2 ->> Foo1 : Request not accepted
+else #Pink There is no MAC address in the email (or too many)
+    Foo2 ->> Foo1 : Request not accepted
 end
 end
 @enduml
-

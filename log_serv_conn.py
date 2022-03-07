@@ -16,15 +16,14 @@ from netmiko import (
 
 def log_server_check(sql_query, log_file_name, mac, config):
     """
-    Отправляет SQL запрос к БД лог-сервера и ждет ответа в течение рабочего дня
-    По истечении рабочего дня возвращает сообщение об ошибке
+    Sends an SQL query to the log server database and waits for a response during the working day
     """
     with open(config['proj_dir'] + 'sql_params.json', 'r') as sql_params:
         sql = json.load(sql_params)
     try:
         with ConnectHandler(**sql) as sql_ssh:
-            logging.info('\r\n>>>------------------------SQL-ЗАПРОС-------------------------<<<\r\n\r\n\r\n' +
-                 sql_query.split('"')[1] + '\r\n\r\nОжидание подключения устройства...............\r\n\r\n')
+            logging.info('\r\n>>>------------------------SQL-QUERY-------------------------<<<\r\n\r\n\r\n' +
+                 sql_query.split('"')[1] + '\r\n\r\nWaiting for device connection...............\r\n\r\n')
             while True:
                 hour = int(datetime.datetime.today().strftime('%H'))
                 if hour < 18:
@@ -34,15 +33,15 @@ def log_server_check(sql_query, log_file_name, mac, config):
                         sql_ssh.disconnect()
                         return answer
                     time.sleep(60)
-                # Конец рабочего дня
+                # End of the working day
                 elif hour >= 18:
-                    no_connecting = '!!!NOT OK!!! События с данным устройством не найдены в базе лог-сервера в течение ' \
-                                    'рабочего дня\r\n\r\nЗаявка не выполнена'
+                    no_connecting = '!!!NOT OK!!! Events with this device were not found in the log server database ' \
+				    'during the working day\r\n\r\nTask failed'
                     answer = {'answer': no_connecting}
                     sql_ssh.disconnect()
                     return answer
     except (NetmikoTimeoutException, NetmikoAuthenticationException) as error:
-        logging.info('НЕ МОГУ ПОДКЛЮЧИТЬСЯ К ЛОГ-СЕРВЕРУ\r\n\r\n' + str(error) + '\r\n\r\nЗаявка не выполнена')
-        task_result = 'Заявка не выполнена'
+        logging.info('LOG SERVER CONNECTION ERROR\r\n\r\n' + str(error) + '\r\n\r\nTask failed')
+        task_result = 'Task failed''
         end_task(log_file_name, mac, task_result, config)
 

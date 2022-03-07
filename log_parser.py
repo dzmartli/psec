@@ -5,7 +5,7 @@ import re
 
 def ip_addr(sql_answer):
     """
-    Находит IP адрес коммутатора, с которого пришло событие безопастности
+    IP-address
     """
     reg_ip = r'([0-9]{1,3}[.]){3}([0-9]{1,3})'
     answer = sql_answer['answer']
@@ -16,7 +16,7 @@ def ip_addr(sql_answer):
 
 def cisco_port_num(sql_answer):
     """
-    Находит порт на коммутаторе, к которому подключается устройство
+    Port number
     """
     reg_port = r'(\S+Ethernet\d+/\d+/\d+)|(\S+Ethernet\d+/\d+)|(\S+Ethernet\d+)'
     answer = sql_answer['answer']
@@ -27,7 +27,7 @@ def cisco_port_num(sql_answer):
 
 def cisco_mac_addr(sql_answer):
     """
-    Находит МАС-адрес устройства
+    MAC-address
     """
     reg_mac = r'([0-9a-f]{4}[.]){2}([0-9a-f]{4})'
     answer = sql_answer['answer']
@@ -38,7 +38,7 @@ def cisco_mac_addr(sql_answer):
 
 def log_parse(sql_answer):
     """
-    Создает словарь с параметрами из syslog сообщения с указанием вендора
+    Task params
     """
     if sql_answer['vendor'] == 'cisco':
         task_params = {

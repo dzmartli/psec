@@ -11,7 +11,7 @@ from netmiko import ConnectHandler
 
 class BaseCiscoSSH(Wrapp):
     """
-    Класс подключения к коммутатору cisco
+    Cisco switch connection class
     """
     def __init__(self, task_params, log_file_name, config, **cisco):
         self.port = task_params['port_num']
@@ -35,59 +35,59 @@ class BaseCiscoSSH(Wrapp):
     @Wrapp.next_check
     def completed_task(self):
         """
-        Проверяет выполнялись ли настройки до выставления заявки
+        Checks if settings have been made before
         """
         if self.mac in self.log:
-            logging.info('<<<OK>>> Настройки выполнены ранее <<<OK>>>\r\n\r\nЗаявка выполнена')
+            logging.info('<<<OK>>> Settings have been made before <<<OK>>>\r\n\r\nTask completed')
             self.ssh.disconnect()
             return True
         else:
-            logging.info('!!!OK!!!! Требуется настройка\r\n')
+            logging.info('!!!OK!!!! Setup required\r\n')
             return False
 
     @Wrapp.failed_check
     def access(self):
         """
-        Проверяет является ли портом доступа (на случай ошибки IP или порта)
+        Checks if it is an access port (in case of an IP or port error)
         """
         if 'switchport mode access' in self.log:
-            logging.info('!!!OK!!! Порт доступа\r\n')
+            logging.info('!!!OK!!! Access port\r\n')
             return True
         else:
             self.ssh.disconnect()
-            logging.info('!!!NOT OK!!!! НЕ ПОРТ ДОСТУПА\r\n\r\nЗаявка НЕ выполнена')
+            logging.info('!!!NOT OK!!!! Not an access port\r\n\r\nTask failed')
             return False
 
     @Wrapp.failed_check
     def max(self):
         """
-        Проверяет допустимое кол-во устройств на порту
+        Checks the allowed number of devices on a port
         """
         if 'maximum' not in self.log:
-            logging.info('!!!OK!!! Разрешено только одно устройство на порту\r\n')
+            logging.info('!!!OK!!! Only one device allowed per port\r\n')
             return True
         else:
             self.ssh.disconnect()
-            logging.info('!!!NOT OK!!! Настройка нескольких устройств на порту\r\n\r\nЗаявка НЕ выполнена')
+            logging.info('!!!NOT OK!!! Configuring multiple devices per port\r\n\r\nTask failed'')
             return False
 
     @Wrapp.failed_check
     def port_stat(self):
         """
-        Проверяет состояние порта
+        Checks port status
         """
         if ' is down' in self.int_stat:
             self.ssh.disconnect()
-            logging.info('!!!NOT OK!!! Состояние порта DOWN\r\n\r\nЗаявка НЕ выполнена')
+            logging.info('!!!NOT OK!!! Port status DOWN\r\n\r\nTask failed')
             return False
         else:
-            logging.info('!!!OK!!! Состояние порта UP\r\n')
+            logging.info('!!!OK!!! Port status UP\r\n')
             return True
 
     @Wrapp.failed_check
     def check_hub(self):
         """
-        Проверяет подключается ли устройство через хаб
+        Checks if the device is connected via a hub
         """
         logging_mac_split = self.logging_mac.split('\n')
         logging_mac_split_all = []
@@ -98,36 +98,36 @@ class BaseCiscoSSH(Wrapp):
         for line_log_ip in logging_mac_split_all:
             if self.mac not in line_log_ip:
                 logging_mac_split_clean.append(line_log_ip)
-        # Если были PSECURE_VIOLATION на этом же порту за сегодня но с другим МАСом
+        # If there were PSECURE_VIOLATION on the same port today but with a different MAC
         if len(logging_mac_split_clean) >= 1:
             self.ssh.disconnect()
-            logging.info('!!!NOT OK!!! Несколько устройств на порту, подключают хаб\r\n\r\nЗаявка НЕ выполнена')
+            logging.info('!!!NOT OK!!! Multiple devices on a port connect through a hub\r\n\r\nTask failed'')
             return False
         else:
-            logging.info('!!!OK!!! Один мак на порту\r\n')
+            logging.info('!!!OK!!! One MAC per port\r\n')
             return True
 
     @Wrapp.failed_check
     def mac_on_other_port(self):
         """
-        Проверяет прилип ли этот МАC к другому порту этого же коммутатора
+        Checks if this MAC is stuck to another port on the same switch
         """
         if self.mac in self.sh_run:
             int_list = re.findall(r'(\S+Ethernet\S+)', self.sh_run)
             for ints in int_list:
                 sh_int = self.ssh.send_command('sh run interface ' + ints, delay_factor=10)
-                # Сброс стики не делается, если этот MAC-адрес прилип к порту за котороым стоит хаб
+                # Clear sticky is not done if this MAC address is stick to the port behind which the hub is located
                 if self.mac in sh_int:
                     if 'maximum' in sh_int:
                         self.ssh.disconnect()
-                        logging.info('!!!NOT OK!!! МАС на другом порту ' +
-                             ints + ', но там подключен хаб\r\n\r\nЗаявка НЕ выполнена')
+                        logging.info('!!!NOT OK!!! MAC on another port ' +
+                             ints + ', but a hub is connected there\r\n\r\nTask failed')
                         return False
                     else:
                         self.ssh.send_command('clear port-security sticky interface ' + ints, delay_factor=10)
                         time.sleep(5)
-                        logging.info('!!!OK!!! Портстики сброшен на старом порту ' +
-                                      ints + ' (МАС на другом порту)\r\n')
+                        logging.info('!!!OK!!! Port sticky reset on other port ' +
+                                      ints + '\r\n')
                         return True
 
     @Wrapp.next_check
@@ -137,47 +137,47 @@ class BaseCiscoSSH(Wrapp):
             logging.info(log)
             self.ssh.send_command('wr mem', delay_factor=20)
             self.ssh.disconnect()
-            logging.info('<<<OK>>> УСПЕШНАЯ НАСТРОЙКА <<<OK>>>\r\n\r\nЗаявка выполнена')
+            logging.info('<<<OK>>> SUCCESSFUL SETUP <<<OK>>>\r\n\r\nTask completed')
             return True
         else:
-            logging.info('!!!OK!!! Сброс порт-стики\r\n')
+            logging.info('!!!OK!!! Port sticky reset\r\n')
             return False
 
     @Wrapp.next_check
     def port_sec_first_try(self):
         """
-        Настройка port-security
+        Port-security setup
         """
         self.ssh.send_command('clear port-security sticky interface ' + self.port, delay_factor=5)
         time.sleep(30)
-        # Обновляем информацию по порту
+        # Update port information
         log = self.ssh.send_command('sh run interface ' + self.port, delay_factor=5)
         if self.mac in log:
             logging.info(log)
             self.ssh.send_command('wr mem', delay_factor=20)
             self.ssh.disconnect()
-            logging.info('<<<OK>>> УСПЕШНАЯ НАСТРОЙКА <<<OK>>>\r\n\r\nЗаявка выполнена')
+            logging.info('<<<OK>>> SUCCESSFUL SETUP <<<OK>>>\r\n\r\nTask completed')
             return True
         else:
-            logging.info('!!!OK!!! МАС не прилип, нужна вторая попытка\r\n')
+            logging.info('!!!OK!!! MAC not stick, second try needed\r\n')
             return False
 
     @Wrapp.pass_check
     def port_sec_second_try(self):
-        # Если не хватило времени прилипнуть делается ещё одна попытка
+        # If there is not enough time to stick, one more attempt is made
         self.ssh.send_command('clear port-security sticky interface ' + self.port, delay_factor=5)
         time.sleep(240)
-        # Обновляем информацию по порту
+        # Update port information
         log = self.ssh.send_command('sh run interface ' + self.port, delay_factor=5)
         if self.mac in log:
             logging.info(log)
             self.ssh.send_command('wr mem', delay_factor=20)
             self.ssh.disconnect()
-            logging.info('<<<OK>>> УСПЕШНАЯ НАСТРОЙКА (повторный сброс) <<<OK>>>\r\n\r\nЗаявка выполнена')
+            logging.info('<<<OK>>> SUCCESSFUL SETUP (second reset) <<<OK>>>\r\n\r\nTask completed')
             return True
         else:
             self.ssh.disconnect()
-            logging.info('!!!NOT OK!!! НЕ УДАЛОСЬ НАСТРОИТЬ, '
-                         'МАС НЕ ПРИЛИПАЕТ К ПОРТУ\r\n\r\nЗаявка не выполнена')
+            logging.info('!!!NOT OK!!! UNABLE TO SET UP, '
+                         'MAC DOES NOT STICK TO THE PORT\r\n\r\nTask failed')
             return False
 

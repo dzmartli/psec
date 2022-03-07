@@ -32,8 +32,8 @@ from service_funcs import (
 
 def check_glob_err(main):
     """
-    Декоратор
-    Обработка глобальных ошибок
+    Decorator
+    Handling global errors
     """
     def wrapp_glob_err(*args, **kwargs):
         try:
@@ -46,8 +46,8 @@ def check_glob_err(main):
 
 def check_task_err(task):
     """
-    Декоратор
-    Обработка ошибок отдельных процессов
+    Decorator
+    Error handling for individual processes
     """
     def wrapp_task_err(*args, **kwargs):
         try:
@@ -61,7 +61,7 @@ def check_task_err(task):
 
 def connections(log_file_name, task_params, mac, config):
     """
-    Выбор вендора
+    Vendor selection
     """
     if task_params['vendor'] == 'cisco':
         cisco_connection(log_file_name, task_params, mac, config)
@@ -70,10 +70,10 @@ def connections(log_file_name, task_params, mac, config):
 @check_task_err
 def task(decoded_message):
     """
-    Выполняет обработку одной завки
+    Performs processing of a single task
     """
     mac = find_macs_in_mess(decoded_message)
-    # Настройка логгера
+    # Logger setup
     if len(mac) > 12:
         log_file_name = 'task_' + str(os.getpid()) + '__' + 'nomac' + '__' + \
                         datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -83,59 +83,59 @@ def task(decoded_message):
     logging.basicConfig(filename=config['proj_dir'] + 'logs/' + log_file_name + '.txt',
                         format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
     logging.getLogger("paramiko").setLevel(logging.WARNING)
-    logging.info('\r\n=============================ОТЧЕТ=ПО=ЗАЯВКЕ=============================\r\n\r\n' +
+    logging.info('\r\n=============================TASK=REPORT=============================\r\n\r\n' +
                  log_file_name +
-                 '\r\n\r\n>>>---------------------ТЕКСТ-СООБЩЕНИЯ-----------------------<<<\r\n\r\n' +
+                 '\r\n\r\n>>>--------------------------MESSAGE--------------------------<<<\r\n\r\n' +
                  decoded_message +
                  '\r\n\r\n>>>-----------------------------------------------------------<<<\r\n\r\n')
-    # Находит МАС в заявке
+    # Finds the MAC in the ticket
     find_macs_in_mess_check(log_file_name, mac, config)
-    # Отправляет сообщение "заявка принята" с МАСом устройства
+    # Sends an "request accepted" message with the MAC of the device
     send_start(log_file_name, mac, config)
-    # Создает запрос
+    # Create a request
     sql_query = create_sql_query(mac, config)
-    # Делает запрос на лог-сервер
+    # Makes a request to a log server
     sql_answer = log_server_check(sql_query, log_file_name, mac, config)
     sql_answer_check(log_file_name, sql_answer, mac, config)
-    # Парсит ответ от лог-сервера
+    # Parses the response
     task_params = log_parse(sql_answer)
-    # Проверяет есть ли коммутатор в списке исключенных
+    # Checks if the switch is in the excluded list
     ip_list_check(log_file_name, task_params, mac, config)
-    # Подключается к устройству и выполняет настройки
+    # Connects to the device and performs settings
     connections(log_file_name, task_params, mac, config)
 
 
 def message(message_dict):
     """
-    Проверка сообщения
+    Message check
     """
-    # Внутренне или внешнее сообщение?
+    # Internal or external message?
     if message_dict['email'].split('@')[1] != config['mail_from'].split('@')[1]:
-        restriction = 'Сообщение получено из внешнего источника.'
+        restriction = 'Message received from an external source'
         send_violation(message_dict, restriction, config)
     else:
-        # Служебное сообщение с кнопкой <REPORT>
+        # Service message <REPORT>
         if 'REPORT' in message_dict['message']:
             if message_dict['email'] == config['mailbox']:
                 send_report(message_dict['email'], config)
-        # Служебное сообщение с кнопкой <KILL>
+        # Service message <KILL>
         elif 'KILL' in message_dict['message']:
             if message_dict['email'] == config['mailbox']:
                 kill_in_mess(message_dict, config)
         else:
-            # Отправитель сотрудник информационной безопасности?
+            # Sender from inf-sec?
             if message_dict['email'] in config['infsec_emails']:
                 proc = Process(target=task, name=task, args=(message_dict['message'],))
                 proc.daemon = True
                 proc.start()
             else:
-                restriction = 'Заявка не принята: не сотрудник информационной безопасности.'
+                restriction = 'Request not accepted: sender not from inf-sec'
                 send_violation(message_dict, restriction, config)
 
 
 def read_mail(config):
     """
-    Забирает письмо из почтового ящика
+    Picks up mail from mailbox
     """
     server = poplib.POP3(config['mail_server'])
     server.user(config['mail_from'])
@@ -156,11 +156,11 @@ def read_mail(config):
             charset = msg.get_content_charset()
             raw_mess = msg.get_payload(decode=True).decode(charset)
         raw_message_dict = {'email': email_from, 'message': raw_mess}
-        # Удаление обработанного письма
+        # Deleting a processed message
         server.dele(1)
         server.quit()
         return raw_message_dict
-    # Если ящик пустой
+    # If the box is empty
     except Exception:
         server.quit()
         return None
@@ -169,11 +169,11 @@ def read_mail(config):
 @check_glob_err
 def main():
     """
-    Обработка сообщений по одному
+    Message processing one by one
     """
     while True:
         log_rotation(config)
-        # Кэширование декодированного сообщения
+        # Decoded message caching
         raw_message_dict = read_mail(config)
         if raw_message_dict is not None:
             message_dict = clean_message(raw_message_dict)
@@ -183,7 +183,7 @@ def main():
 
 
 if __name__ == '__main__':
-    # Конфигурация
+    # Configuration
     project_dir = argv[1]
     with open(project_dir + 'conf.json', 'r') as conf:
         config = json.load(conf)

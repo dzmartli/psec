@@ -17,7 +17,7 @@ from email.mime.application import MIMEApplication
 
 def log_rotation(config):
     """
-    Ротация логов
+    Log rotation
     """
     if os.path.exists(config['log_dir'] + 'logs/') == False:
         os.mkdir(config['log_dir'] + 'logs/')
@@ -34,27 +34,27 @@ def log_rotation(config):
 
 def send_report(email, config):
     """
-    Отправляет логи текущих заявок
-    Выполняется при наличии ключа <REPORT> в тексте сообщения
+    Sends logs of current requests
+    Executed if the <REPORT> key is present in the message text
     """
     files_list = os.listdir(config['log_dir'] + 'logs/')
-    # Есть открытые заявки
+    # There are open requests
     if len(files_list) >= 1:
         msg = MIMEMultipart()
-        msg['Subject'] = 'Логи текущих заявок во вложении'
+        msg['Subject'] = 'Logs of current requests in an attachment'
         send = smtplib.SMTP(config['mail_server'])
         for f in files_list:
             file_path = os.path.join(config['log_dir'] + 'logs/', f)
             attachment = MIMEApplication(open(file_path, 'rb').read(), _subtype='txt')
             attachment.add_header('Content-Disposition', 'attachment', filename=f)
             msg.attach(attachment)
-        msg.attach(MIMEText('Логи текущих заявок во вложении'))
+        msg.attach(MIMEText('Logs of current requests in an attachment'))
         send.sendmail(config['mail_from'], [email], msg.as_string())
         send.quit()
-    # Нет открытых заявок
+    # No open requests
     else:
         msg = MIMEMultipart()
-        msg['Subject'] = 'На данный момент нет заявок в обработке'
+        msg['Subject'] = 'There are currently no requests being processed'
         send = smtplib.SMTP(config['mail_server'])
         send.sendmail(config['mail_from'], [email], msg.as_string())
         send.quit()
@@ -62,19 +62,19 @@ def send_report(email, config):
 
 def send_start(log_file_name, mac, config):
     """
-    Отправляет сообщение об открытии заявки с указанием МАС-адреса устройства и трекера заявки
+    Sends a message about the opening of the ticket, indicating the MAC address of the device and the ticket tracker
     """
     msg = MIMEMultipart()
-    msg['Subject'] = mac + ' принят в обработку'
+    msg['Subject'] = mac + ' request accepted'
     send = smtplib.SMTP(config['mail_server'])
-    msg.attach(MIMEText(mac + ' принят в обработку, ТРЕКЕР: ' + log_file_name))
+    msg.attach(MIMEText(mac + ' request accepted, TRACKER: ' + log_file_name))
     send.sendmail(config['mail_from'], [config['mailbox']], msg.as_string())
     send.quit()
 
 
 def send_end(log_file_name, mac, task_result, config):
     """
-    Отправляет сообщение о закрытии заявки с указанием её статуса и логом её выполнения
+    Sends a message about the closing of the request with an indication of its status and a log of its execution
     """
     msg = MIMEMultipart()
     msg['Subject'] = task_result + ' ' + mac
@@ -88,13 +88,13 @@ def send_end(log_file_name, mac, task_result, config):
 
 def send_violation(message_dict, restriction, config):
     """
-    Сообщение безопастности
+    Security message
     """
     msg = MIMEMultipart()
-    msg['Subject'] = 'Уведомление безопастности. Сообщение от: ' + message_dict['email']
+    msg['Subject'] = 'Security notice. Message from: ' + message_dict['email']
     send = smtplib.SMTP(config['mail_server'])
     msg.attach(MIMEText(restriction +
-               '\r\n\r\n----------СООБЩЕНИЕ----------\r\n\r\n' +
+               '\r\n\r\n----------MESSAGE----------\r\n\r\n' +
                message_dict['message']))
     send.sendmail(config['mail_from'], [config['mailbox']], msg.as_string())
     send.quit()
@@ -102,14 +102,13 @@ def send_violation(message_dict, restriction, config):
 
 def send_error(message_dict, error, config):
     """
-    Сообщение об ошибке
-    Наверно тут стоит задуматься о классе.....
+    Error message
     """
     msg = MIMEMultipart()
-    msg['Subject'] = 'Ошибка, такой заявки не существует'
+    msg['Subject'] = 'Error, such request does not exist'
     send = smtplib.SMTP(config['mail_server'])
     msg.attach(MIMEText(error +
-               '\r\n\r\n----------СООБЩЕНИЕ----------\r\n\r\n' +
+               '\r\n\r\n----------MESSAGE----------\r\n\r\n' +
                message_dict['message']))
     send.sendmail(config['mail_from'], message_dict['email'], msg.as_string())
     send.quit()
@@ -117,8 +116,8 @@ def send_error(message_dict, error, config):
 
 def kill_in_mess(message_dict, config):
     """
-    Принудительно завершает заявку при условии наличия ключа <KILL> в сообщении
-    После указанного ключа в сообщении должен быть указан трекер заявки
+    Forces the request to end if the <KILL> key is present in the message
+    After the specified key in the message, the ticket tracker must be indicated
     """
     try:
         reg_kill = r'(task_\S+)'
@@ -142,25 +141,23 @@ def kill_in_mess(message_dict, config):
 
 def ip_list_check(log_file_name, task_params, mac, config):
     """
-    Проверяет есть ли хост в списке запрещенных
+    Checks if a host is on the banned list
     """
     if task_params['ip_addr'] not in config['bad_ips']:
-        logging.info('!!!OK!!! Хост не в списке исключенных адресов\r\n\r\n')
+        logging.info('!!!OK!!! This host is not in the list of excluded addresses\r\n\r\n')
     else:
-        logging.info('!!!NOT OK!!! Хост в списке исключенных адресов\r\n\r\nЗаявка не выполнена')
-        task_result = 'Заявка не выполнена'
+        logging.info('!!!NOT OK!!! This host is in the list of excluded addresses\r\n\r\nTask failed')
+        task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
 
 
 def sql_answer_check(log_file_name, sql_answer, mac, config):
     """
-    Проверяет ответ от БД лог-сервера
-    Отправляет сообщение с результатом, завершает процесс заявки
-    в случае неудавлетворительного выполнения log_server_check()
+    Checks the response from the log server DB
     """
-    if 'Заявка не выполнена' in sql_answer['answer']:
+    if 'Task failed' in sql_answer['answer']:
         logging.info(sql_answer['answer'])
-        task_result = 'Заявка не выполнена'
+        task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
     else:
         logging.info('SQL_ANSWER: ' + sql_answer['answer'] + '\r\n')
@@ -168,7 +165,7 @@ def sql_answer_check(log_file_name, sql_answer, mac, config):
 
 def clean_message(raw_message_dict):
     """
-    Очистка сообщения
+    Message clearing
     """
     reg_mess = r'<[\s\S|.]*?>|&nbsp;|&quot;|.*?;}'
     clean_mess = re.sub(reg_mess, '', raw_message_dict['message'])
@@ -180,7 +177,7 @@ def clean_message(raw_message_dict):
 
 def find_macs_in_mess(decoded_message):
     """
-    Поиск МАС-адреса в сообщении
+    Finding the MAC address in a message
     """
     reg = re.compile('\s(?P<mac>([0-9A-Fa-fАаВСсЕеOО]{2}[\s:.-]){5}([0-9A-Fa-fАаВСсЕеOО]{2})'
                      '|([0-9A-Fa-fАаВСсЕеOО]{3}[\s:.-]){3}([0-9A-Fa-fАаВСсЕеOО]{3})'
@@ -195,7 +192,7 @@ def find_macs_in_mess(decoded_message):
         match = match.replace(':', "").replace('-', "").replace('.', "") \
                      .replace(' ', "").replace('\n', "").replace('\t', "")
         match = match.lower()
-        # Заменить кириллические символы
+        # Replace Cyrillic characters
         match = match.replace('а', 'a').replace('в', 'b').replace('с', 'c') \
                      .replace('е', 'e').replace('о', '0').replace('o', '0')
         format_matches.append(match)
@@ -203,37 +200,32 @@ def find_macs_in_mess(decoded_message):
         new_mac = format_matches[0]
         return new_mac
     elif len(format_matches) == 0:
-        no_mac = 'В заявке не найдены МАС-адреса\r\n\r\nЗаявка не выполнена'
+        no_mac = 'No MAC addresses found\r\n\r\nTask failed'
         return no_mac
     elif len(format_matches) >= 2:
-        too_much_mac = 'В заявке слишком много совпадений\r\n\r\nЗаявка не выполнена'
+        too_much_mac = 'Too many matches\r\n\r\nTask failed'
         return too_much_mac
 
 
 def find_macs_in_mess_check(log_file_name, mac, config):
     """
-    Проверяет find_macs_in_mess()
-    Отправляет сообщение с результатом, завершает процесс заявки
-    в случае неудавлетворительного выполнения find_macs_in_mess()
+    Is there a MAC address in the message?
     """
-    # Ничего не найдено
-    if 'В заявке не найдены МАС-адреса' in mac:
+    if 'No MAC addresses found' in mac:
         logging.info(mac)
-        mac = 'В заявке не найдены МАС-адреса'
-        task_result = 'Заявка не выполнена'
+        mac = 'No MAC addresses found'
+        task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
-    # Слишком много матчей
-    elif 'В заявке слишком много совпадений' in mac:
+    elif 'Too many matches' in mac:
         logging.info(mac)
-        mac = 'В заявке слишком много совпадений'
-        task_result = 'Заявка не выполнена'
+        mac = 'Too many matches'
+        task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
 
 
 def create_sql_query(mac, config):
     """
-    Создает SQL запрос с найденным МАС-адресом для лог-сервера
-    Событие должно содержать искомый МАС-адрес и иметь ту же дату что и запрос
+    Creates a SQL query for the log server
     """
     mac_cisco = mac[:4] + '.' + mac[4:8]  + '.' + mac[8:12]
     match_sql = ('''mysql -u ''' + config['db_user'] + ''' -p''' + config['db_pass'] +
@@ -246,7 +238,7 @@ def create_sql_query(mac, config):
 
 def end_task(log_file_name, mac, task_result, config):
     """
-    Завершает заявку (отправляет сообщение с результатом)
+    Ends a request
     """
     send_end(log_file_name, mac, task_result, config)
     mv = 'mv ' + config['log_dir'] + 'logs/' + log_file_name + '.txt ' + \

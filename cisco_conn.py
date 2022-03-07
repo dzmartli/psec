@@ -14,14 +14,14 @@ from netmiko import (
 
 def cisco_connection(log_file_name, task_params, mac, config):
     """
-    Создает экземпляр класса подключения к коммутатору cisco, выполняет подключение, процедуры проверки и настройки
+    Connects to the cisco switch and configures it
     """
     with open(config['proj_dir'] + 'cisco_params.json', 'r') as cisco_params:
         cisco = json.load(cisco_params)
     cisco.update({'host': task_params['ip_addr']})
     try:
         with BaseCiscoSSH(task_params, log_file_name, config, **cisco) as cisco_conn:
-            logging.info('\r\n>>>-----------------НАСТРОЙКА-ОБОРУДОВАНИЯ--------------------<<<\r\n\r\n\r\n'
+            logging.info('\r\n>>>-----------------SWITCH-SETUP--------------------<<<\r\n\r\n\r\n'
                          '!!!STARTLOG!!! ' + task_params['vendor'] + ' ' + task_params['ip_addr'] + ' ' +
                          task_params['port_num'] + ' ' +  task_params['mac_addr'] + ' !!!STARTLOG!!!\r\n\r\n')
             cisco_conn.completed_task()
@@ -34,12 +34,12 @@ def cisco_connection(log_file_name, task_params, mac, config):
             cisco_conn.port_sec_first_try()
             cisco_conn.port_sec_second_try()
     #except (NetmikoTimeoutException, NetmikoAuthenticationException) as error:
-    #    logging.info('НЕ МОГУ ПОДКЛЮЧИТЬСЯ К УСТРОЙСТВУ\r\n\r\n' + str(error) + '\r\n\r\nЗаявка не выполнена')
-    #    task_result = 'Заявка не выполнена'
+    #    logging.info('CONNECTION ERROR\r\n\r\n' + str(error) + '\r\n\r\nTask failed')
+    #    task_result = 'Task failed'
     #    end_task(log_file_name, mac, task_result, config)
-    # Отлавливаются все исключения (бывают специфичные ошибки netmiko)
+    # Catches all Netmiko exceptions
     except Exception as error:
-        logging.exception('ОШИБКА ВЫПОЛНЕНИЯ ЗАЯВКИ\r\n\r\nЗаявка не выполнена\r\n\r\n')
-        task_result = 'Заявка не выполнена'
+        logging.exception('REQUEST PERFORMANCE ERROR\r\n\r\nTask failed\r\n\r\n')
+        task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
 
