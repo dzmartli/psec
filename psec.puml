@@ -1,5 +1,5 @@
 @startuml
-title Sequence diagram Psec
+title Psec sequence diagram
 autonumber
 actor "Infsec engineer" as Foo
 box "Mail Server"
