@@ -176,7 +176,7 @@ def read_mail(config):
         server.dele(1)
         server.quit()
         return raw_message_dict
-    # If the box is empty
+    # If mailbox is empty or other exception ¯\_(ツ)_/¯
     except Exception:
         server.quit()
         return {'email': 'Empty', 'message': 'No messages or other exception'}
