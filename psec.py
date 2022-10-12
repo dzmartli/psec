@@ -15,11 +15,11 @@ from email.parser import Parser
 from multiprocessing import Process
 from service_funcs import (
     send_violation,
-    clean_message,
+    clearing_message,
     log_rotation,
     send_report,
     send_start,
-    kill_in_mess,
+    kill_task,
     ip_list_check,
     sql_answer_check,
     find_macs_in_mess_check,
@@ -132,7 +132,7 @@ def check_message(message_dict):
         # Service message <KILL>
         elif 'KILL' in message_dict['message']:
             if message_dict['email'] == config['mailbox']:
-                kill_in_mess(message_dict, config)
+                kill_task(message_dict, config)
         else:
             # Sender from inf-sec?
             if message_dict['email'] in config['infsec_emails']:
@@ -189,7 +189,7 @@ def main():
         # Decoded message caching
         raw_message_dict = read_mail(config)
         if raw_message_dict['message'] != 'No messages or other exception':
-            message_dict = clean_message(raw_message_dict)
+            message_dict = clearing_message(raw_message_dict)
             check_message(message_dict)
         else:
             time.sleep(60)

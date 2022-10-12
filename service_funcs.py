@@ -4,8 +4,6 @@ import re
 import sys
 import os
 import subprocess
-import time
-import json
 import logging
 import smtplib
 import datetime
@@ -19,9 +17,9 @@ def log_rotation(config):
     """
     Log rotation
     """
-    if os.path.exists(config['log_dir'] + 'logs/') == False:
+    if os.path.exists(config['log_dir'] + 'logs/') is False:
         os.mkdir(config['log_dir'] + 'logs/')
-    if os.path.exists(config['log_dir'] + 'log_archive/') == False:
+    if os.path.exists(config['log_dir'] + 'log_archive/') is False:
         os.mkdir(config['log_dir'] + 'log_archive/')
     if len(glob.glob1(config['log_dir'] + 'log_archive/', '*.txt')) >= 50:
         tar = 'tar czf ' + config['log_dir'] + 'log_archive/log_archive_' + \
@@ -45,8 +43,11 @@ def send_report(email, config):
         send = smtplib.SMTP(config['mail_server'])
         for f in files_list:
             file_path = os.path.join(config['log_dir'] + 'logs/', f)
-            attachment = MIMEApplication(open(file_path, 'rb').read(), _subtype='txt')
-            attachment.add_header('Content-Disposition', 'attachment', filename=f)
+            attachment = MIMEApplication(open(file_path, 'rb').read(),
+                                         _subtype='txt')
+            attachment.add_header('Content-Disposition',
+                                  'attachment',
+                                  filename=f)
             msg.attach(attachment)
         msg.attach(MIMEText('Logs of current requests in an attachment'))
         send.sendmail(config['mail_from'], [email], msg.as_string())
@@ -62,7 +63,8 @@ def send_report(email, config):
 
 def send_start(log_file_name, mac, config):
     """
-    Sends a message about the opening of the ticket, indicating the MAC address of the device and the ticket tracker
+    Sends a message about the opening of the ticket,
+    indicating the MAC address of the device and the ticket tracker
     """
     msg = MIMEMultipart()
     msg['Subject'] = mac + ' request accepted'
@@ -74,7 +76,8 @@ def send_start(log_file_name, mac, config):
 
 def send_end(log_file_name, mac, task_result, config):
     """
-    Sends a message about the closing of the request with an indication of its status and a log of its execution
+    Sends a message about the closing of the request
+    with an indication of its status and a log of its execution
     """
     msg = MIMEMultipart()
     msg['Subject'] = task_result + ' ' + mac
@@ -94,8 +97,8 @@ def send_violation(message_dict, restriction, config):
     msg['Subject'] = 'Security notice. Message from: ' + message_dict['email']
     send = smtplib.SMTP(config['mail_server'])
     msg.attach(MIMEText(restriction +
-               '\r\n\r\n----------MESSAGE----------\r\n\r\n' +
-               message_dict['message']))
+                        '\r\n\r\n----------MESSAGE----------\r\n\r\n' +
+                        message_dict['message']))
     send.sendmail(config['mail_from'], [config['mailbox']], msg.as_string())
     send.quit()
 
@@ -108,16 +111,17 @@ def send_error(message_dict, error, config):
     msg['Subject'] = 'Error, such request does not exist'
     send = smtplib.SMTP(config['mail_server'])
     msg.attach(MIMEText(error +
-               '\r\n\r\n----------MESSAGE----------\r\n\r\n' +
-               message_dict['message']))
+                        '\r\n\r\n----------MESSAGE----------\r\n\r\n' +
+                        message_dict['message']))
     send.sendmail(config['mail_from'], message_dict['email'], msg.as_string())
     send.quit()
 
 
-def kill_in_mess(message_dict, config):
+def kill_task(message_dict, config):
     """
     Forces the request to end if the <KILL> key is present in the message
-    After the specified key in the message, the ticket tracker must be indicated
+    After the specified key in the message,
+    the ticket tracker must be indicated
     """
     try:
         reg_kill = r'(task_\S+)'
@@ -130,8 +134,9 @@ def kill_in_mess(message_dict, config):
             mac = log_file_name.split('__')[1].replace('-', '.')
             task_result = log_file_name + ' terminated'
             send_end(log_file_name, mac, task_result, config)
-            mv = 'mv ' + config['log_dir'] + 'logs/' + log_file_name + '.txt ' + \
-                 config['log_dir'] + 'log_archive/' + log_file_name + '.txt'
+            mv = 'mv ' + config['log_dir'] + 'logs/' + \
+                log_file_name + '.txt ' + \
+                config['log_dir'] + 'log_archive/' + log_file_name + '.txt'
             subprocess.Popen(mv, shell=True)
         except Exception as error:
             send_error(message_dict, str(error), config)
@@ -144,9 +149,11 @@ def ip_list_check(log_file_name, task_params, mac, config):
     Checks if a host is on the banned list
     """
     if task_params['ip_addr'] not in config['bad_ips']:
-        logging.info('!!!OK!!! This host is not in the list of excluded addresses\r\n\r\n')
+        logging.info('!!!OK!!! This host is not in the list '
+                     'of excluded addresses\r\n\r\n')
     else:
-        logging.info('!!!NOT OK!!! This host is in the list of excluded addresses\r\n\r\nTask failed')
+        logging.info('!!!NOT OK!!! This host is in the list '
+                     'of excluded addresses\r\n\r\nTask failed')
         task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
 
@@ -163,7 +170,7 @@ def sql_answer_check(log_file_name, sql_answer, mac, config):
         logging.info('SQL_ANSWER: ' + sql_answer['answer'] + '\r\n')
 
 
-def clean_message(raw_message_dict):
+def clearing_message(raw_message_dict):
     """
     Message clearing
     """
@@ -179,9 +186,12 @@ def find_macs_in_mess(decoded_message):
     """
     Finding the MAC address in a message
     """
-    reg = re.compile('\s(?P<mac>([0-9A-Fa-fАаВСсЕеOО]{2}[\s:.-]){5}([0-9A-Fa-fАаВСсЕеOО]{2})'
-                     '|([0-9A-Fa-fАаВСсЕеOО]{3}[\s:.-]){3}([0-9A-Fa-fАаВСсЕеOО]{3})'
-                     '|([([0-9A-Fa-fАаВСсЕеOО]{4}[\s:.-]){2}([0-9A-Fa-fАаВСсЕеOО]{4})'
+    reg = re.compile('\s(?P<mac>([0-9A-Fa-fАаВСсЕеOО]{2}[\s:.-]){5}'
+                     '([0-9A-Fa-fАаВСсЕеOО]{2})'
+                     '|([0-9A-Fa-fАаВСсЕеOО]{3}[\s:.-]){3}'
+                     '([0-9A-Fa-fАаВСсЕеOО]{3})'
+                     '|([([0-9A-Fa-fАаВСсЕеOО]{4}[\s:.-]){2}'
+                     '([0-9A-Fa-fАаВСсЕеOО]{4})'
                      '|([0-9A-Fa-fАаВСсЕеOО]{12}))\s')
     m = reg.finditer(decoded_message)
     matches = []
@@ -227,9 +237,11 @@ def create_sql_query(mac, config):
     """
     Creates a SQL query for the log server
     """
-    mac_cisco = mac[:4] + '.' + mac[4:8]  + '.' + mac[8:12]
-    match_sql = ('''mysql -u ''' + config['db_user'] + ''' -p''' + config['db_pass'] +
-                 ''' -D Syslog -e "SELECT FromHost, Message FROM SystemEvents WHERE DeviceReportedTime LIKE '%''' +
+    mac_cisco = mac[:4] + '.' + mac[4:8] + '.' + mac[8:12]
+    match_sql = ('''mysql -u ''' + config['db_user'] +
+                 ''' -p''' + config['db_pass'] +
+                 ''' -D Syslog -e "SELECT FromHost, Message FROM ''' +
+                 '''SystemEvents WHERE DeviceReportedTime LIKE '%''' +
                  datetime.datetime.today().strftime('%Y-%m-%d') +
                  '''%' AND Message REGEXP '.*(''' + mac_cisco +
                  ''').*' ORDER BY ID DESC LIMIT 1;"''')
@@ -245,4 +257,3 @@ def end_task(log_file_name, mac, task_result, config):
          config['log_dir'] + 'log_archive/' + log_file_name + '.txt'
     subprocess.Popen(mv, shell=True)
     sys.exit()
-
