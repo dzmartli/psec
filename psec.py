@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-import re
 import os
 import time
 import json
@@ -20,7 +19,6 @@ from service_funcs import (
     log_rotation,
     send_report,
     send_start,
-    end_task,
     kill_in_mess,
     ip_list_check,
     sql_answer_check,
@@ -38,7 +36,8 @@ def check_glob_err(main):
     def wrapp_glob_err(*args, **kwargs):
         try:
             main(*args, **kwargs)
-        except Exception as glob_err:
+        # Catch all ¯\_(ツ)_/¯
+        except Exception:
             with open(config['proj_dir'] + 'glob_err.txt', 'w') as glob_err_f:
                 glob_err_f.write(traceback.format_exc())
     return wrapp_glob_err
@@ -52,14 +51,18 @@ def check_task_err(task):
     def wrapp_task_err(*args, **kwargs):
         try:
             task(*args, **kwargs)
-        except Exception as task_err:
-            with open(config['proj_dir'] + 'task_err_' +
-                      datetime.datetime.today().strftime('%Y-%m-%d--%H-%M-%S') +'.txt', 'w') as task_err_f:
+        # Catch all ¯\_(ツ)_/¯
+        except Exception:
+            with open(config['proj_dir'] +
+                      'task_err_' +
+                      datetime.datetime .today()
+                      .strftime('%Y-%m-%d--%H-%M-%S') +
+                      '.txt', 'w') as task_err_f:
                 task_err_f.write(traceback.format_exc())
     return wrapp_task_err
 
 
-def connections(log_file_name, task_params, mac, config):
+def connect(log_file_name, task_params, mac, config):
     """
     Vendor selection
     """
@@ -68,7 +71,7 @@ def connections(log_file_name, task_params, mac, config):
 
 
 @check_task_err
-def task(decoded_message):
+def execute_task(decoded_message):
     """
     Performs processing of a single task
     """
@@ -76,18 +79,25 @@ def task(decoded_message):
     # Logger setup
     if len(mac) > 12:
         log_file_name = 'task_' + str(os.getpid()) + '__' + 'nomac' + '__' + \
-                        datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     else:
-        log_file_name = 'task_' + str(os.getpid()) + '__' + mac.replace('.', '-') + '__' + \
-                        datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    logging.basicConfig(filename=config['proj_dir'] + 'logs/' + log_file_name + '.txt',
-                        format='%(asctime)s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+        log_file_name = 'task_' + str(os.getpid()) + '__' + \
+            mac.replace('.', '-') + '__' + \
+            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    logging.basicConfig(filename=config['proj_dir'] +
+                        'logs/' +
+                        log_file_name +
+                        '.txt',
+                        format='%(asctime)s %(message)s',
+                        level=logging.INFO,
+                        datefmt='%Y-%m-%d %H:%M:%S')
     logging.getLogger("paramiko").setLevel(logging.WARNING)
-    logging.info('\r\n=============================TASK=REPORT=============================\r\n\r\n' +
-                 log_file_name +
-                 '\r\n\r\n>>>--------------------------MESSAGE--------------------------<<<\r\n\r\n' +
-                 decoded_message +
-                 '\r\n\r\n>>>-----------------------------------------------------------<<<\r\n\r\n')
+    logging.info(f'\r\n=============================TASK=REPORT============'
+                 f'=================\r\n\r\n{log_file_name}'
+                 f'\r\n\r\n>>>--------------------------MESSAGE------------'
+                 f'--------------<<<\r\n\r\n{decoded_message}'
+                 f'\r\n\r\n>>>---------------------------------------------'
+                 f'--------------<<<\r\n\r\n')
     # Finds the MAC in the ticket
     find_macs_in_mess_check(log_file_name, mac, config)
     # Sends an "request accepted" message with the MAC of the device
@@ -102,15 +112,16 @@ def task(decoded_message):
     # Checks if the switch is in the excluded list
     ip_list_check(log_file_name, task_params, mac, config)
     # Connects to the device and performs settings
-    connections(log_file_name, task_params, mac, config)
+    connect(log_file_name, task_params, mac, config)
 
 
-def message(message_dict):
+def check_message(message_dict):
     """
     Message check
     """
     # Internal or external message?
-    if message_dict['email'].split('@')[1] != config['mail_from'].split('@')[1]:
+    if message_dict['email'].split('@')[1] != config['mail_from'] \
+            .split('@')[1]:
         restriction = 'Message received from an external source'
         send_violation(message_dict, restriction, config)
     else:
@@ -125,7 +136,9 @@ def message(message_dict):
         else:
             # Sender from inf-sec?
             if message_dict['email'] in config['infsec_emails']:
-                proc = Process(target=task, name=task, args=(message_dict['message'],))
+                proc = Process(target=execute_task,
+                               name=execute_task,
+                               args=(message_dict['message'],))
                 proc.daemon = True
                 proc.start()
             else:
@@ -163,7 +176,7 @@ def read_mail(config):
     # If the box is empty
     except Exception:
         server.quit()
-        return None
+        return {'email': 'Empty', 'message': 'No messages or other exception'}
 
 
 @check_glob_err
@@ -175,9 +188,9 @@ def main():
         log_rotation(config)
         # Decoded message caching
         raw_message_dict = read_mail(config)
-        if raw_message_dict is not None:
+        if raw_message_dict['message'] != 'No messages or other exception':
             message_dict = clean_message(raw_message_dict)
-            message(message_dict)
+            check_message(message_dict)
         else:
             time.sleep(60)
 
@@ -188,4 +201,3 @@ if __name__ == '__main__':
     with open(project_dir + 'conf.json', 'r') as conf:
         config = json.load(conf)
     main()
-
