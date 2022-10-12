@@ -3,7 +3,7 @@
 import re
 
 
-def ip_addr(sql_answer):
+def get_ip_addr(sql_answer):
     """
     IP-address
     """
@@ -14,18 +14,18 @@ def ip_addr(sql_answer):
     return ip
 
 
-def cisco_port_num(sql_answer):
+def get_cisco_port_num(sql_answer):
     """
     Port number
     """
-    reg_port = r'(\S+Ethernet\d+/\d+/\d+)|(\S+Ethernet\d+/\d+)|(\S+Ethernet\d+)'
+    re_port = r'(\S+Ethernet\d+/\d+/\d+)|(\S+Ethernet\d+/\d+)|(\S+Ethernet\d+)'
     answer = sql_answer['answer']
-    match_port = re.search(reg_port, answer)
+    match_port = re.search(re_port, answer)
     port = match_port.group()
     return port
 
 
-def cisco_mac_addr(sql_answer):
+def get_cisco_mac_addr(sql_answer):
     """
     MAC-address
     """
@@ -43,9 +43,8 @@ def log_parse(sql_answer):
     if sql_answer['vendor'] == 'cisco':
         task_params = {
             'vendor': 'cisco',
-            'ip_addr': ip_addr(sql_answer),
-            'mac_addr': cisco_mac_addr(sql_answer),
-            'port_num': cisco_port_num(sql_answer),
+            'ip_addr': get_ip_addr(sql_answer),
+            'mac_addr': get_cisco_mac_addr(sql_answer),
+            'port_num': get_cisco_port_num(sql_answer),
         }
         return task_params
-

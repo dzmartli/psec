@@ -17,9 +17,9 @@ def log_rotation(config):
     """
     Log rotation
     """
-    if os.path.exists(config['log_dir'] + 'logs/') is False:
+    if not os.path.exists(config['log_dir'] + 'logs/'):
         os.mkdir(config['log_dir'] + 'logs/')
-    if os.path.exists(config['log_dir'] + 'log_archive/') is False:
+    if not os.path.exists(config['log_dir'] + 'log_archive/'):
         os.mkdir(config['log_dir'] + 'log_archive/')
     if len(glob.glob1(config['log_dir'] + 'log_archive/', '*.txt')) >= 50:
         tar = 'tar czf ' + config['log_dir'] + 'log_archive/log_archive_' + \
@@ -238,12 +238,15 @@ def create_sql_query(mac, config):
     Creates a SQL query for the log server
     """
     mac_cisco = mac[:4] + '.' + mac[4:8] + '.' + mac[8:12]
-    match_sql = ('''mysql -u ''' + config['db_user'] +
-                 ''' -p''' + config['db_pass'] +
+    match_sql = ('''mysql -u ''' +
+                 config['db_user'] +
+                 ''' -p''' +
+                 config['db_pass'] +
                  ''' -D Syslog -e "SELECT FromHost, Message FROM ''' +
                  '''SystemEvents WHERE DeviceReportedTime LIKE '%''' +
                  datetime.datetime.today().strftime('%Y-%m-%d') +
-                 '''%' AND Message REGEXP '.*(''' + mac_cisco +
+                 '''%' AND Message REGEXP '.*(''' +
+                 mac_cisco +
                  ''').*' ORDER BY ID DESC LIMIT 1;"''')
     return match_sql
 
@@ -254,6 +257,6 @@ def end_task(log_file_name, mac, task_result, config):
     """
     send_end(log_file_name, mac, task_result, config)
     mv = 'mv ' + config['log_dir'] + 'logs/' + log_file_name + '.txt ' + \
-         config['log_dir'] + 'log_archive/' + log_file_name + '.txt'
+        config['log_dir'] + 'log_archive/' + log_file_name + '.txt'
     subprocess.Popen(mv, shell=True)
     sys.exit()

@@ -14,9 +14,12 @@ class Wrapp:
         If passed, go to the next
         """
         def wrapp_failed_check(self):
-            if method(self) == False:
+            if not method(self):
                 task_result = 'Task failed'
-                end_task(self.log_file_name, self.mac, task_result, self.config)
+                end_task(self.log_file_name, 
+                         self.mac,
+                         task_result, 
+                         self.config)
         return wrapp_failed_check
 
     @staticmethod
@@ -26,9 +29,12 @@ class Wrapp:
         If not passed, go to the next
         """
         def wrapp_next_check(self):
-            if method(self) == True:
+            if method(self):
                 task_result = 'Task completed'
-                end_task(self.log_file_name, self.mac, task_result, self.config)
+                end_task(self.log_file_name,
+                         self.mac,
+                         task_result,
+                         self.config)
         return wrapp_next_check
 
     @staticmethod
@@ -38,10 +44,9 @@ class Wrapp:
         Last check
         """
         def wrapp_pass_check(self):
-            if method(self) == True:
+            if method(self):
                 task_result = 'Task completed'
             else:
                 task_result = 'Task failed'
             end_task(self.log_file_name, self.mac, task_result, self.config)
         return wrapp_pass_check
-
