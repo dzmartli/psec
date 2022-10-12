@@ -68,6 +68,9 @@ def connect(log_file_name, task_params, mac, config):
     """
     if task_params['vendor'] == 'cisco':
         cisco_connection(log_file_name, task_params, mac, config)
+    else:
+        raise ValueError("task_params['vendor'] must be 'cisco'"
+                         "other vendors are not yet implemented")
 
 
 @check_task_err

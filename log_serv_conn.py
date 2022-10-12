@@ -36,7 +36,7 @@ def log_server_check(sql_query, log_file_name, mac, config):
                         return answer
                     time.sleep(60)
                 # End of the working day
-                elif hour >= 18:
+                else:
                     no_connecting = '!!!NOT OK!!! Events with this device' \
                         'were not found in the log server database ' \
                         'during the working day\r\n\r\nTask failed'

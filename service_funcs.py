@@ -212,7 +212,7 @@ def find_macs_in_mess(decoded_message):
     elif len(format_matches) == 0:
         no_mac = 'No MAC addresses found\r\n\r\nTask failed'
         return no_mac
-    elif len(format_matches) >= 2:
+    else:
         too_much_mac = 'Too many matches\r\n\r\nTask failed'
         return too_much_mac
 
@@ -231,6 +231,8 @@ def find_macs_in_mess_check(log_file_name, mac, config):
         mac = 'Too many matches'
         task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
+    else:
+        pass
 
 
 def create_sql_query(mac, config):
@@ -242,7 +244,7 @@ def create_sql_query(mac, config):
                  config['db_user'] +
                  ''' -p''' +
                  config['db_pass'] +
-                 ''' -D Syslog -e "SELECT FromHost, Message FROM ''' +
+                 ''' -D Syslog -e "SELECT FromHost, Message FROM '''
                  '''SystemEvents WHERE DeviceReportedTime LIKE '%''' +
                  datetime.datetime.today().strftime('%Y-%m-%d') +
                  '''%' AND Message REGEXP '.*(''' +
