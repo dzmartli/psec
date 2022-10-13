@@ -6,11 +6,11 @@ from service_funcs import end_task
 from typing import Dict
 
 
-def get_ip_addr(answer: str,
-                log_file_name: str,
-                mac: str,
-                config: dict
-                ) -> str:
+def get_cisco_ip_addr(answer: str,
+                      log_file_name: str,
+                      mac: str,
+                      config: dict
+                      ) -> str:
     """
     IP-address
     """
@@ -59,7 +59,7 @@ def log_parse(sql_answer: Dict[str, str],
     if sql_answer['vendor'] == 'cisco':
         task_params = {
             'vendor': 'cisco',
-            'ip_addr': get_ip_addr(answer, log_file_name, mac, config),
+            'ip_addr': get_cisco_ip_addr(answer, log_file_name, mac, config),
             'mac_addr': mac[:4] + '.' + mac[4:8] + '.' + mac[8:12],
             'port_num': get_cisco_port_num(answer, log_file_name, mac, config),
         }
