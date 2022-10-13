@@ -13,6 +13,7 @@ from cisco_conn import cisco_connection
 from log_parser import log_parse
 from email.parser import Parser
 from multiprocessing import Process
+from typing import Callable, Dict
 from service_funcs import (
     send_violation,
     clearing_message,
@@ -28,7 +29,7 @@ from service_funcs import (
 )
 
 
-def check_glob_err(main):
+def check_glob_err(main: Callable) -> Callable:
     """
     Decorator
     Handling global errors
@@ -43,7 +44,7 @@ def check_glob_err(main):
     return wrapp_glob_err
 
 
-def check_task_err(task):
+def check_task_err(task: Callable) -> Callable:
     """
     Decorator
     Error handling for individual processes
@@ -62,7 +63,11 @@ def check_task_err(task):
     return wrapp_task_err
 
 
-def connect(log_file_name, task_params, mac, config):
+def connect(log_file_name: str,
+            task_params: Dict[str, str],
+            mac: str,
+            config: dict
+            ) -> None:
     """
     Vendor selection
     """
@@ -74,7 +79,7 @@ def connect(log_file_name, task_params, mac, config):
 
 
 @check_task_err
-def execute_task(decoded_message):
+def execute_task(decoded_message: str) -> None:
     """
     Performs processing of a single task
     """
@@ -111,22 +116,22 @@ def execute_task(decoded_message):
     sql_answer = log_server_check(sql_query, log_file_name, mac, config)
     sql_answer_check(log_file_name, sql_answer, mac, config)
     # Parses the response
-    task_params = log_parse(sql_answer)
+    task_params = log_parse(sql_answer, log_file_name, mac, config)
     # Checks if the switch is in the excluded list
     ip_list_check(log_file_name, task_params, mac, config)
     # Connects to the device and performs settings
     connect(log_file_name, task_params, mac, config)
 
 
-def check_message(message_dict):
+def check_message(message_dict: Dict[str, str]) -> None:
     """
     Message check
     """
     # Internal or external message?
     if message_dict['email'].split('@')[1] != config['mail_from'] \
             .split('@')[1]:
-        restriction = 'Message received from an external source'
-        send_violation(message_dict, restriction, config)
+        external_restriction: str = 'Message received from an external source'
+        send_violation(message_dict, external_restriction, config)
     else:
         # Service message <REPORT>
         if 'REPORT' in message_dict['message']:
@@ -140,16 +145,17 @@ def check_message(message_dict):
             # Sender from inf-sec?
             if message_dict['email'] in config['infsec_emails']:
                 proc = Process(target=execute_task,
-                               name=execute_task,
+                               name='execute_task',
                                args=(message_dict['message'],))
                 proc.daemon = True
                 proc.start()
             else:
-                restriction = 'Request not accepted: sender not from inf-sec'
-                send_violation(message_dict, restriction, config)
+                sender_restriction: str = 'Request not accepted: ' \
+                    'sender not from inf-sec'
+                send_violation(message_dict, sender_restriction, config)
 
 
-def read_mail(config):
+def read_mail(config: dict) -> Dict[str, str]:
     """
     Picks up mail from mailbox
     """
@@ -162,7 +168,7 @@ def read_mail(config):
         msg = Parser().parsestr(msg_content)
         email_from = (msg.get('From')).split('<')[1].replace('>', '')
         if msg.is_multipart():
-            raw_mess = ''
+            raw_mess: str = ''
             for part in msg.get_payload():
                 charset = part.get_content_charset()
                 if charset is not None:
@@ -183,7 +189,7 @@ def read_mail(config):
 
 
 @check_glob_err
-def main():
+def main() -> None:
     """
     Message processing one by one
     """

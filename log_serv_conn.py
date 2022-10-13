@@ -4,6 +4,7 @@ import json
 import time
 import datetime
 import logging
+from typing import Dict
 from service_funcs import end_task
 from netmiko import (
     ConnectHandler,
@@ -12,7 +13,11 @@ from netmiko import (
 )
 
 
-def log_server_check(sql_query, log_file_name, mac, config):
+def log_server_check(sql_query: str,
+                     log_file_name: str,
+                     mac: str,
+                     config: dict
+                     ) -> Dict[str, str]:
     """
     Sends an SQL query to the log server database
     and waits for a response during the working day
@@ -40,7 +45,7 @@ def log_server_check(sql_query, log_file_name, mac, config):
                     no_connecting = '!!!NOT OK!!! Events with this device' \
                         'were not found in the log server database ' \
                         'during the working day\r\n\r\nTask failed'
-                    answer = {'answer': no_connecting}
+                    answer = {'vendor': 'None', 'answer': no_connecting}
                     sql_ssh.disconnect()
                     return answer
     except (NetmikoTimeoutException, NetmikoAuthenticationException) as error:
@@ -49,3 +54,4 @@ def log_server_check(sql_query, log_file_name, mac, config):
                      '\r\n\r\nTask failed')
         task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
+        raise RuntimeError("end_task() does not work properly")

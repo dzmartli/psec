@@ -3,10 +3,14 @@
 import json
 import logging
 from cisco_class import BaseCiscoSSH
+from typing import Dict
 from service_funcs import end_task
 
 
-def cisco_connection(log_file_name, task_params, mac, config):
+def cisco_connection(log_file_name: str,
+                     task_params: Dict[str, str],
+                     mac: str,
+                     config: dict) -> None:
     """
     Connects to the cisco switch and configures it
     """
@@ -41,3 +45,4 @@ def cisco_connection(log_file_name, task_params, mac, config):
                           'ERROR\r\n\r\nTask failed\r\n\r\n')
         task_result = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
+        raise RuntimeError("end_task() does not work properly")

@@ -8,12 +8,13 @@ import logging
 import smtplib
 import datetime
 import glob
+from typing import Dict
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 
 
-def log_rotation(config):
+def log_rotation(config: dict) -> None:
     """
     Log rotation
     """
@@ -30,7 +31,7 @@ def log_rotation(config):
             os.remove(log)
 
 
-def send_report(email, config):
+def send_report(email: str, config: dict) -> None:
     """
     Sends logs of current requests
     Executed if the <REPORT> key is present in the message text
@@ -61,7 +62,7 @@ def send_report(email, config):
         send.quit()
 
 
-def send_start(log_file_name, mac, config):
+def send_start(log_file_name: str, mac: str, config: dict) -> None:
     """
     Sends a message about the opening of the ticket,
     indicating the MAC address of the device and the ticket tracker
@@ -74,7 +75,11 @@ def send_start(log_file_name, mac, config):
     send.quit()
 
 
-def send_end(log_file_name, mac, task_result, config):
+def send_end(log_file_name: str,
+             mac: str,
+             task_result: str,
+             config: dict
+             ) -> None:
     """
     Sends a message about the closing of the request
     with an indication of its status and a log of its execution
@@ -89,7 +94,10 @@ def send_end(log_file_name, mac, task_result, config):
     send.quit()
 
 
-def send_violation(message_dict, restriction, config):
+def send_violation(message_dict: Dict[str, str],
+                   restriction: str,
+                   config: dict
+                   ) -> None:
     """
     Security message
     """
@@ -103,7 +111,7 @@ def send_violation(message_dict, restriction, config):
     send.quit()
 
 
-def send_error(message_dict, error, config):
+def send_error(message_dict: Dict[str, str], error: str, config: dict) -> None:
     """
     Error message
     """
@@ -117,16 +125,17 @@ def send_error(message_dict, error, config):
     send.quit()
 
 
-def kill_task(message_dict, config):
+def kill_task(message_dict: Dict[str, str], config: dict) -> None:
     """
     Forces the request to end if the <KILL> key is present in the message
     After the specified key in the message,
     the ticket tracker must be indicated
     """
     try:
-        reg_kill = r'(task_\S+)'
+        reg_kill: str = r'(task_\S+)'
         decoded_message = message_dict['message']
         task_match = re.search(reg_kill, decoded_message)
+        assert task_match is not None
         log_file_name = task_match.groups()[0]
         kill_proc = int(log_file_name.split('_')[1])
         try:
@@ -144,7 +153,11 @@ def kill_task(message_dict, config):
         send_error(message_dict, str(error), config)
 
 
-def ip_list_check(log_file_name, task_params, mac, config):
+def ip_list_check(log_file_name: str,
+                  task_params: Dict[str, str],
+                  mac: str,
+                  config: dict
+                  ) -> None:
     """
     Checks if a host is on the banned list
     """
@@ -154,27 +167,31 @@ def ip_list_check(log_file_name, task_params, mac, config):
     else:
         logging.info('!!!NOT OK!!! This host is in the list '
                      'of excluded addresses\r\n\r\nTask failed')
-        task_result = 'Task failed'
+        task_result: str = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
 
 
-def sql_answer_check(log_file_name, sql_answer, mac, config):
+def sql_answer_check(log_file_name: str,
+                     sql_answer: Dict[str, str],
+                     mac: str,
+                     config: dict
+                     ) -> None:
     """
     Checks the response from the log server DB
     """
     if 'Task failed' in sql_answer['answer']:
         logging.info(sql_answer['answer'])
-        task_result = 'Task failed'
+        task_result: str = 'Task failed'
         end_task(log_file_name, mac, task_result, config)
     else:
         logging.info('SQL_ANSWER: ' + sql_answer['answer'] + '\r\n')
 
 
-def clearing_message(raw_message_dict):
+def clearing_message(raw_message_dict: Dict[str, str]) -> Dict[str, str]:
     """
     Message clearing
     """
-    reg_mess = r'<[\s\S|.]*?>|&nbsp;|&quot;|.*?;}'
+    reg_mess: str = r'<[\s\S|.]*?>|&nbsp;|&quot;|.*?;}'
     clean_mess = re.sub(reg_mess, '', raw_message_dict['message'])
     reg_line_break = r'(\r\n){5,}'
     clean_mess = re.sub(reg_line_break, '\r\n', clean_mess)
@@ -182,7 +199,7 @@ def clearing_message(raw_message_dict):
     return raw_message_dict
 
 
-def find_macs_in_mess(decoded_message):
+def find_macs_in_mess(decoded_message: str) -> str:
     """
     Finding the MAC address in a message
     """
@@ -194,10 +211,10 @@ def find_macs_in_mess(decoded_message):
                      '([0-9A-Fa-fАаВСсЕеOО]{4})'
                      '|([0-9A-Fa-fАаВСсЕеOО]{12}))\s')
     m = reg.finditer(decoded_message)
-    matches = []
+    matches: list = []
     for mat in m:
         matches.append(mat.group('mac'))
-    format_matches = []
+    format_matches: list = []
     for match in matches:
         match = match.replace(':', "").replace('-', "").replace('.', "") \
                      .replace(' ', "").replace('\n', "").replace('\t', "")
@@ -217,25 +234,27 @@ def find_macs_in_mess(decoded_message):
         return too_much_mac
 
 
-def find_macs_in_mess_check(log_file_name, mac, config):
+def find_macs_in_mess_check(log_file_name: str,
+                            mac: str,
+                            config: dict
+                            ) -> None:
     """
     Is there a MAC address in the message?
     """
+    task_result: str = 'Task failed'
     if 'No MAC addresses found' in mac:
         logging.info(mac)
-        mac = 'No MAC addresses found'
-        task_result = 'Task failed'
-        end_task(log_file_name, mac, task_result, config)
+        no_mac: str = 'No MAC addresses found'
+        end_task(log_file_name, no_mac, task_result, config)
     elif 'Too many matches' in mac:
         logging.info(mac)
-        mac = 'Too many matches'
-        task_result = 'Task failed'
-        end_task(log_file_name, mac, task_result, config)
+        to_many_mac: str = 'Too many matches'
+        end_task(log_file_name, to_many_mac, task_result, config)
     else:
         pass
 
 
-def create_sql_query(mac, config):
+def create_sql_query(mac: str, config: dict) -> str:
     """
     Creates a SQL query for the log server
     """
@@ -253,7 +272,11 @@ def create_sql_query(mac, config):
     return match_sql
 
 
-def end_task(log_file_name, mac, task_result, config):
+def end_task(log_file_name: str,
+             mac: str,
+             task_result: str,
+             config: dict
+             ) -> None:
     """
     Ends a request
     """

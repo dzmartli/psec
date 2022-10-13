@@ -7,6 +7,6 @@
 "mail_pass": "",
 "db_user": "",
 "db_pass": "",
-"bad_ips": [],
-"infsec_emails": []
+"bad_ips": [""],
+"infsec_emails": [""]
 }

@@ -3,7 +3,7 @@
 This prototype was developed for educational purposes based on a fictitious specification for a non-existent enterprise. Cisco devices (available in GNS3) are used as an example of access equipment.  
 
 **Dependencies:**
-- Python 3.6.9
+- Python 3.7.14
 - Netmiko 3.3.3
 
 ## How it works
