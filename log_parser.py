@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 
-import re
 import logging
-from service_funcs import end_task
+import re
 from typing import Dict
+
+from service_funcs import end_task
 
 
 def get_cisco_ip_addr(answer: str,

@@ -1,32 +1,31 @@
 #! /usr/bin/env python3
 
-import os
-import time
+import datetime
 import json
 import logging
+import os
 import poplib
-import datetime
+import time
 import traceback
-from sys import argv
-from log_serv_conn import log_server_check
-from cisco_conn import cisco_connection
-from log_parser import log_parse
 from email.parser import Parser
 from multiprocessing import Process
+from sys import argv
 from typing import Callable, Dict
-from service_funcs import (
-    send_violation,
-    clearing_message,
-    log_rotation,
-    send_report,
-    send_start,
-    kill_task,
-    ip_list_check,
-    sql_answer_check,
-    find_macs_in_mess_check,
-    create_sql_query,
-    find_macs_in_mess,
-)
+
+from cisco_conn import cisco_connection
+from log_parser import log_parse
+from log_serv_conn import log_server_check
+from service_funcs import (clearing_message,
+                           create_sql_query,
+                           find_macs_in_mess,
+                           find_macs_in_mess_check,
+                           ip_list_check,
+                           kill_task,
+                           log_rotation,
+                           send_report,
+                           send_start,
+                           send_violation,
+                           sql_answer_check)
 
 
 def check_glob_err(main: Callable) -> Callable:

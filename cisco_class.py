@@ -1,12 +1,14 @@
 #! /usr/bin/env python3
 
+import datetime
+import logging
 import re
 import time
-import logging
-import datetime
-from wrapp_class import Wrapp
-from typing import Dict, Any
+from typing import Any, Dict
+
 from netmiko import ConnectHandler
+
+from wrapp_class import Wrapp
 
 
 class BaseCiscoSSH(Wrapp):
@@ -17,7 +19,8 @@ class BaseCiscoSSH(Wrapp):
                  task_params: Dict[str, str],
                  log_file_name: str,
                  config: dict,
-                 **cisco: Any) -> None:
+                 **cisco: Any
+                 ) -> None:
         self.port = task_params['port_num']
         self.date = datetime.datetime.today().strftime('%b %d')
         self.mac = task_params['mac_addr']

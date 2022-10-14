@@ -1,17 +1,17 @@
 #! /usr/bin/env python3
 
-import re
-import sys
-import os
-import subprocess
-import logging
-import smtplib
 import datetime
 import glob
-from typing import Dict
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import logging
+import os
+import re
+import smtplib
+import subprocess
+import sys
 from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Dict
 
 
 def log_rotation(config: dict) -> None:

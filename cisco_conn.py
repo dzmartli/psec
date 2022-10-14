@@ -2,8 +2,9 @@
 
 import json
 import logging
-from cisco_class import BaseCiscoSSH
 from typing import Dict
+
+from cisco_class import BaseCiscoSSH
 from service_funcs import end_task
 
 

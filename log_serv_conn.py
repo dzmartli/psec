@@ -1,16 +1,16 @@
 #! /usr/bin/env python3
 
-import json
-import time
 import datetime
+import json
 import logging
+import time
 from typing import Dict
+
+from netmiko import (ConnectHandler,
+                     NetmikoAuthenticationException,
+                     NetmikoTimeoutException)
+
 from service_funcs import end_task
-from netmiko import (
-    ConnectHandler,
-    NetmikoTimeoutException,
-    NetmikoAuthenticationException,
-)
 
 
 def log_server_check(sql_query: str,

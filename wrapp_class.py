@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
 
-from service_funcs import end_task
 from typing import Callable
+
+from service_funcs import end_task
 
 
 class Wrapp:
