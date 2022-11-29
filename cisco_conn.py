@@ -31,8 +31,11 @@ def cisco_connection(log_file_name: str,
         cisco = json.load(cisco_params)
     cisco.update({'host': task_params['ip_addr']})
     try:
-        with BaseCiscoSSH(task_params, log_file_name, config,
-                          **cisco) as cisco_conn:
+        with BaseCiscoSSH(task_params,
+                          log_file_name,
+                          config,
+                          **cisco
+                          ) as cisco_conn:
             logging.info('\r\n>>>-----------------SWITCH-SETUP------------'
                          '--------<<<\r\n\r\n\r\n!!!STARTLOG!!! ' +
                          task_params['vendor'] +
