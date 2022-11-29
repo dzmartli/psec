@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
-
+"""
+Main script
+"""
 import datetime
 import json
 import logging
@@ -32,6 +34,12 @@ def check_glob_err(main: Callable) -> Callable:
     """
     Decorator
     Handling global errors
+
+    Args:
+        main (Callable): Main function
+
+    Returns:
+        wrapp_glob_err (Callable): Wrapper
     """
     def wrapp_glob_err(*args, **kwargs):
         try:
@@ -47,6 +55,12 @@ def check_task_err(task: Callable) -> Callable:
     """
     Decorator
     Error handling for individual processes
+
+    Args:
+        main (Callable): Task function
+
+    Returns:
+        wrapp_glob_err (Callable): Wrapper
     """
     def wrapp_task_err(*args, **kwargs):
         try:
@@ -69,6 +83,16 @@ def connect(log_file_name: str,
             ) -> None:
     """
     Vendor selection
+
+    Args:
+        log_file_name (str): Log file name (for current task)
+        task_params (dict): Dict with task params
+        mac (str): Device MAC-address
+        config (dict): Dict with config data
+    Raises:
+        ValueError ("task_params['vendor'] must be 'cisco'"
+                    "other vendors are not yet implemented"):
+            Other device vendors not supported yet
     """
     if task_params['vendor'] == 'cisco':
         cisco_connection(log_file_name, task_params, mac, config)
@@ -81,6 +105,9 @@ def connect(log_file_name: str,
 def execute_task(decoded_message: str) -> None:
     """
     Performs processing of a single task
+
+    Args:
+        decoded_message (str): Deccoded message from email
     """
     mac = find_macs_in_mess(decoded_message)
     # Logger setup
@@ -125,6 +152,10 @@ def execute_task(decoded_message: str) -> None:
 def check_message(message_dict: Dict[str, str]) -> None:
     """
     Message check
+
+    Args:
+        message_dict (dict): Dict with message data
+            (senders email, and actual data)
     """
     # Internal or external message?
     if message_dict['email'].split('@')[1] != config['mail_from'] \
@@ -157,6 +188,15 @@ def check_message(message_dict: Dict[str, str]) -> None:
 def read_mail(config: dict) -> Dict[str, str]:
     """
     Picks up mail from mailbox
+
+    Args:
+        config (dict): Dict with config data
+
+    Returns:
+        raw_message_dict (dict): Dict with message data
+            (senders email, and actual data in raw format)
+        (dict): {'email': 'Empty', 'message': 'No messages or other exception'}
+            if mailbox is empty (or other exception)
     """
     server = poplib.POP3(config['mail_server'])
     server.user(config['mail_from'])

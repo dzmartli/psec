@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
-
+"""
+Connection to Cisco device
+"""
 import json
 import logging
 from typing import Dict
@@ -14,6 +16,16 @@ def cisco_connection(log_file_name: str,
                      config: dict) -> None:
     """
     Connects to the cisco switch and configures it
+
+    Args:
+        log_file_name (str): Log file name (for current task)
+        task_params (dict): Dict with task params
+        mac (str): Device MAC-address
+        config (dict): Dict with config data
+
+    Raises:
+        RuntimeError("end_task() does not work properly"): If end_task()
+            does not end the process
     """
     with open(config['proj_dir'] + 'cisco_params.json', 'r') as cisco_params:
         cisco = json.load(cisco_params)

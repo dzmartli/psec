@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
-
+"""
+Parser for answers from log-server
+"""
 import logging
 import re
 from typing import Dict
@@ -14,6 +16,19 @@ def get_cisco_ip_addr(answer: str,
                       ) -> str:
     """
     IP-address
+
+    Args:
+        answer (str): Answer from log-server
+        log_file_name (str): Log file name (for current task)
+        mac (str): Device MAC-address
+        config (dict): Dict with config data
+
+    Raises:
+        RuntimeError("end_task() does not work properly"): If end_task()
+            does not end the process
+
+    Returns:
+        ip (str): Device IP-address
     """
     reg_ip: str = r'([0-9]{1,3}[.]){3}([0-9]{1,3})'
     match_ip = re.search(reg_ip, answer)
@@ -34,6 +49,19 @@ def get_cisco_port_num(answer: str,
                        ) -> str:
     """
     Port number
+
+    Args:
+        answer (str): Answer from log-server
+        log_file_name (str): Log file name (for current task)
+        mac (str): Device MAC-address
+        config (dict): Dict with config data
+
+    Raises:
+        RuntimeError("end_task() does not work properly"): If end_task()
+            does not end the process
+
+    Returns:
+        port (str): Device port number
     """
     re_port: str = r'(\S+Ethernet\d+/\d+/\d+)' \
         r'|(\S+Ethernet\d+/\d+)|(\S+Ethernet\d+)'
@@ -55,6 +83,20 @@ def log_parse(sql_answer: Dict[str, str],
               ) -> Dict[str, str]:
     """
     Task params
+
+    Args:
+        sql_answer (dict): Answer from log-server with vendor indication
+        log_file_name (str): Log file name (for current task)
+        mac (str): Device MAC-address
+        config (dict): Dict with config data
+
+    Raises:
+        ValueError("task_params['vendor'] must be 'cisco'"
+                   "other vendors are not yet implemented"):
+            Other device vendors not supported yet
+
+    Returns:
+        task_params (dict): Dict with task params
     """
     answer = sql_answer['answer']
     if sql_answer['vendor'] == 'cisco':

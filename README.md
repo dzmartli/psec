@@ -1,6 +1,6 @@
 # Psec 
-**Psec** is a prototype of a system that automates the secure access of new devices to the network using port-security technology.  
-This prototype was developed for educational purposes based on a fictitious specification for a non-existent enterprise. Cisco devices (available in GNS3) are used as an example of access equipment.  
+**Psec** is a prototype of a system that automates secure access of new devices to the network using port-security technology.  
+This prototype was developed for educational purposes and based on a fictitious specification for a non-existent enterprise. Cisco devices (available in GNS3) are used as an example of access equipment.  
 
 **Dependencies:**
 - Python 3.7.14

@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
-
+"""
+Cisco SSH connection class
+"""
 import datetime
 import logging
 import re
@@ -21,6 +23,13 @@ class BaseCiscoSSH(Wrapp):
                  config: dict,
                  **cisco: Any
                  ) -> None:
+        """
+        Args:
+            task_params (dict): Dict with task params
+            log_file_name (str): Log file name (for current task)
+            config (dict): Dict with config data
+            **cisco: Cisco connection params
+        """
         self.port = task_params['port_num']
         self.date = datetime.datetime.today().strftime('%b %d')
         self.mac = task_params['mac_addr']
@@ -49,6 +58,10 @@ class BaseCiscoSSH(Wrapp):
     def check_completed_task(self) -> bool:
         """
         Checks if settings have been made before
+
+        Returns:
+            (bool): True if settings have been made before
+            (bool): False if setup required
         """
         if self.mac in self.log:
             logging.info('<<<OK>>> Settings have been made before '
@@ -63,6 +76,10 @@ class BaseCiscoSSH(Wrapp):
     def check_access(self) -> bool:
         """
         Checks if it is an access port (in case of an IP or port error)
+
+        Returns:
+            (bool): True if access port
+            (bool): False if not
         """
         if 'switchport mode access' in self.log:
             logging.info('!!!OK!!! Access port\r\n')
@@ -76,6 +93,10 @@ class BaseCiscoSSH(Wrapp):
     def check_max_devices(self) -> bool:
         """
         Checks the allowed number of devices on a port
+
+        Returns:
+            (bool): True if only one device allowed per port
+            (bool): False if configuring multiple devices
         """
         if 'maximum' not in self.log:
             logging.info('!!!OK!!! Only one device allowed per port\r\n')
@@ -90,6 +111,10 @@ class BaseCiscoSSH(Wrapp):
     def check_port_stat(self) -> bool:
         """
         Checks port status
+
+        Returns:
+            (bool): True if port status UP
+            (bool): False if port status DOWN
         """
         if ' is down' in self.int_stat:
             self.ssh.disconnect()
@@ -103,6 +128,10 @@ class BaseCiscoSSH(Wrapp):
     def check_hub(self) -> bool:
         """
         Checks if the device is connected via a hub
+
+        Returns:
+            (bool): True if one MAC per port
+            (bool): False if multiple devices on a port
         """
         logging_mac_split = self.logging_mac.split('\n')
         logging_mac_split_all: list = []
@@ -128,6 +157,11 @@ class BaseCiscoSSH(Wrapp):
     def check_mac_on_other_port(self) -> bool:
         """
         Checks if this MAC is stuck to another port on the same switch
+
+        Returns:
+            (bool): False if MAC on another port with hub
+            (bool): True if MAC is not stick other port
+                (and after sticky reset)
         """
         if self.mac not in self.sh_run:
             return True
@@ -164,6 +198,13 @@ class BaseCiscoSSH(Wrapp):
 
     @Wrapp.next_check
     def check_already_stick(self) -> bool:
+        """
+        Checks if MAC already sticks to the right port
+
+        Returns:
+            (bool): True if success
+            (bool): False if not
+        """
         log = self.ssh.send_command('sh run interface ' +
                                     self.port,
                                     delay_factor=10)
@@ -182,6 +223,10 @@ class BaseCiscoSSH(Wrapp):
     def port_sec_first_try(self) -> bool:
         """
         Port-security setup
+
+        Returns:
+            (bool): True if success
+            (bool): False if not (MAC not stick, second try needed)
         """
         self.ssh.send_command('clear port-security sticky interface ' +
                               self.port,
@@ -204,6 +249,13 @@ class BaseCiscoSSH(Wrapp):
 
     @Wrapp.pass_check
     def port_sec_second_try(self) -> bool:
+        """
+        Port sticky reset second try
+
+        Returns:
+            (bool): True if success
+            (bool): False if not (MAC not stick, unable to setup)
+        """
         # If there is not enough time to stick, one more attempt is made
         self.ssh.send_command('clear port-security sticky interface ' +
                               self.port,

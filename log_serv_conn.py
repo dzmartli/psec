@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
-
+"""
+Connection to log-server
+"""
 import datetime
 import json
 import logging
@@ -20,7 +22,22 @@ def log_server_check(sql_query: str,
                      ) -> Dict[str, str]:
     """
     Sends an SQL query to the log server database
-    and waits for a response during the working day
+    and waits for response during the working day
+
+    Args:
+        sql_query (str): SQL query
+        log_file_name (str): Log file name (for current task)
+        mac (str): Device MAC-address
+        config (dict): Dict with config data
+
+    Raises:
+        RuntimeError("end_task() does not work properly"): If end_task()
+            does not end the process
+
+    Returns:
+        answer (dict): Answer from log-server with vendor indication
+        answer (dict): End of the working day - events with this device
+            were not found in the log server database
     """
     with open(config['proj_dir'] + 'sql_params.json', 'r') as sql_params:
         sql = json.load(sql_params)
