@@ -38,7 +38,7 @@ class Wrapp:
         Decorator
         If not passed, go to the next
 
-        rgs:
+        Args:
             main (Callable): Method
 
         Returns:
@@ -59,7 +59,7 @@ class Wrapp:
         Decorator
         Last check
 
-        rgs:
+        Args:
             main (Callable): Method
 
         Returns:
