@@ -7,7 +7,7 @@ This prototype was developed for educational purposes and based on a fictitious 
 - Netmiko 3.3.3
 
 ## How it works
-***[PUML sequence diagram](https://raw.githubusercontent.com/5lunk/psec/main/psec.svg)***  
+![Docker-compose](psec.svg)
 
 Description of parameters in the `conf.json` configuration file:  
 `proj_dir` – project directory  
