@@ -3,11 +3,10 @@
 This prototype was developed for educational purposes and based on a fictitious specification for a non-existent enterprise. Cisco devices (available in GNS3) are used as an example of access equipment.  
 
 **Dependencies:**
-- Python 3.7.14
-- Netmiko 3.3.3
+![](https://img.shields.io/badge/python-3.7.14-blue) ![](https://img.shields.io/badge/netmiko-3.3.3-blue)
 
 ## How it works
-![Docker-compose](psec.svg)
+![](psec.svg)
 
 Description of parameters in the `conf.json` configuration file:  
 `proj_dir` – project directory  
