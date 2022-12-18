@@ -3,7 +3,7 @@
 This prototype was developed for educational purposes and based on a fictitious specification for a non-existent enterprise. Cisco devices (available in GNS3) are used as an example of access equipment.  
 
 ### Dependencies:
-![](https://img.shields.io/badge/python-3.7.14-blue) ![](https://img.shields.io/badge/netmiko-3.3.3-blue)
+![](https://img.shields.io/badge/python-3.6.9-blue) ![](https://img.shields.io/badge/netmiko-3.3.3-blue)
 
 ## How it works
 ![](psec.svg)
